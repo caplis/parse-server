@@ -122,7 +122,8 @@ export class UsersRouter extends ClassesRouter {
           throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, 'Invalid username/password.');
         }
         if (req.config.verifyUserEmails && req.config.preventLoginWithUnverifiedEmail && !user.emailVerified) {
-          throw new Parse.Error(Parse.Error.EMAIL_NOT_FOUND, 'User email is not verified.');
+          //throw new Parse.Error(Parse.Error.EMAIL_NOT_FOUND, 'User email is not verified.');
+          throw new Parse.Error(Parse.Error.EMAIL_NOT_FOUND, 'Invalid username/password.');
         }
         // handle password expiry policy
         if (req.config.passwordPolicy && req.config.passwordPolicy.maxPasswordAge) {
@@ -235,10 +236,15 @@ export class UsersRouter extends ClassesRouter {
       });
     }, err => {
       if (err.code === Parse.Error.OBJECT_NOT_FOUND) {
-        throw new Parse.Error(Parse.Error.EMAIL_NOT_FOUND, `No user found with email ${email}.`);
+        //throw new Parse.Error(Parse.Error.EMAIL_NOT_FOUND, `No user found with email ${email}.`);
+        req.config.loggerController.warn(`No user found with email ${email}.`);
       } else {
-        throw err;
+        //throw err;
+        req.config.loggerController.warn(`Reset request error: ${err.message}.`);
       }
+      return Promise.resolve({
+        response: {}
+      });
     });
   }
 
@@ -255,7 +261,8 @@ export class UsersRouter extends ClassesRouter {
 
     return req.config.database.find('_User', { email: email }).then((results) => {
       if (!results.length || results.length < 1) {
-        throw new Parse.Error(Parse.Error.EMAIL_NOT_FOUND, `No user found with email ${email}`);
+        //throw new Parse.Error(Parse.Error.EMAIL_NOT_FOUND, `No user found with email ${email}`);
+        return { response: {} };
       }
       const user = results[0];
 
@@ -263,7 +270,8 @@ export class UsersRouter extends ClassesRouter {
       delete user.password;
 
       if (user.emailVerified) {
-        throw new Parse.Error(Parse.Error.OTHER_CAUSE, `Email ${email} is already verified.`);
+        //throw new Parse.Error(Parse.Error.OTHER_CAUSE, `Email ${email} is already verified.`);
+        return { response: {} };
       }
 
       const userController = req.config.userController;
